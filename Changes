@@ -1,0 +1,5 @@
+This file documents the revision history for Perl extension MooseX::Role::BuildInstanceOf.
+
+0.01  02 November 2009
+    - First usable version released.  Contains docs, code and tests.
+

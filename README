@@ -1,0 +1,627 @@
+NAME
+    MooseX::Role::BuildInstanceOf - Less Boilerplate when you need lots of
+    Instances
+
+SYNOPSIS
+    Here is the "canonical" form of this role's parameters:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Album::Photo',
+                    prefix => 'photo',
+                    constructor => 'new', 
+                    args => [],
+                    fixed_args => [],
+                    extra_class_handles => {},
+            };
+
+    Given this, your "MyApp::Album" will now have an attribute called
+    'photo', which is an instance of "MyApp::Album::Photo". Other methods
+    and attributes are also created.
+
+    Not all parameters are required. The above could also be written as:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {target => '::Photo'};
+
+    Given the above parameters, this role calls a template and builds the
+    following code into your class:
+
+            package MyApp::Album;
+            use Moose;
+
+            has photo_class => (
+                    is => 'ro',
+                    isa => 'ClassName',
+                    required => 1,
+                    default => 'MyApp::Album::Photo',
+                    lazy => 1,
+                    handles => sub {
+                            return (
+                                    create_photo => 'new',
+                            );
+                    },
+            );
+
+            has photo_args => (
+                    is => 'ro',
+                    isa => 'ArrayRef',
+                    lazy_build => 1,
+            );
+
+            sub _build_photo_args {
+                    return []; ## Populated from 'args' parameter
+            };
+
+            has photo_fixed_args => (
+                    is => 'ro',
+                    init_arg => undef,
+                    isa => 'ArrayRef',
+                    lazy_build => 1,
+            );
+
+            sub _build_args_fixed_args {
+                    return []; ## Populated from 'fixed_args' parameter
+            };
+
+            has photo => (
+                    is => 'ro', 
+                    isa => 'Object', 
+                    init_arg => undef, 
+                    lazy_build => 1,
+            );
+
+            sub _build_photo {
+                    my $self = shift @_;
+                    my $create = 'create_photo';
+                    $self->$create($self->merge_album_args);
+            }
+
+            sub merge_photo_args {
+                    my $self = shift @_;
+                    my $fixed_args = "photo_fixed_args";
+                    my $args = "photo_args";
+                    return (
+                            @{$self->$fixed_args},
+                            @{$self->$args},
+                    );
+            };
+
+    The above example removed a few extraneous bits, we were getting a
+    little long for a SYNOPSIS.
+
+    This role can be called multiple times, either against other target
+    classes, or even the same class (although using a different prefix. You
+    can also modify the generated methods or attributes in the normal Moose
+    way. See </COOKBOOK> for examples.
+
+    You can now instantiate your class with the following (assuming your
+    MyApp::Photos class allows for a 'source_dir' attribute.)
+
+            my $album = MyApp::Album(photo_args=>[source_dir=>'~/photos']);
+
+    The overall goal here being to allow you to defer choice of class and
+    arguments to when the class is actually used, thus achieving maximum
+    flexibility. We can do with with a minimum of Boilerplate code, thus
+    encouraging rather than punishing well separated and clean design.
+
+    Please review the test example and case in /t for more assistance.
+
+DESCRIPTION
+    There can often be a tension between coding for flexibility and for
+    future growth and writing code that is terse, to the point, and solves
+    the smallest possible business problem that is brought to you. Writing
+    the minimum code to solve a particular problem has merit, yet can
+    eventually leave you with an application that has many hacky
+    modifications and is hard to test in an isolated manner. Minimum code
+    should not imply minimum forward planning or poorly tested code.
+
+    For me, doing the right thing means I need to both limit myself to the
+    smallest possible solution for a given business case, yet make sure I am
+    not writing CODE that is impossible to grow over time in a clean manner.
+    Generally I attempt to do this by clearly separating the problem domains
+    under a business case into distinct classes. I then tie all the
+    functional bits together in the loosest manner possible. Moose makes
+    this easy, with its powerful attribute features, type coercions and
+    Roles to augment classical inheritance.
+
+    Loose coupling and deep configurability work well with inversion of
+    control systems, like Bread::Board or the IOC built into the Catalyst
+    MVC framework. It helps me to defer decisions to the proper authority
+    and also makes it easier to test my logic, since pieces are easier to
+    test independently.
+
+    Although this leaves me with the design I desire, I find there's a lot
+    of repeated Boilerplate code and logic, particularly in my main
+    application class which often will marshall several underlying classes,
+    each of which is performing a particular job. For example:
+
+            package MyApp::WebPage;
+
+            use Moose;
+            use Path::Class qw(file);
+            use MyApp::Web::Text;
+
+            has text => (is=>'ro', required=>1, lazy_build=>1);
+
+            sub _build_text {
+                    file("~/text_for_webpage")->slurp;
+            }
+
+    NOTE: For clarity I removed some of the extra type constraint checking
+    and type coercions I'd normally have here. Please see the test cases in
+    /t for a working example.
+
+    This retrieves the text for a single webpage. But what happens when you
+    want to reuse the same class to load webpage data from different
+    directories?
+
+            package MyApp::WebPage;
+
+            use Moose;
+            use Path::Class qw(file);
+            use MyApp::Web::Text;
+
+            has root => (is=>'ro', required=>1);
+            has text => (is=>'ro', required=>1, lazy_build=>1);
+
+            sub _build_text {
+                    my ($self) = @_;
+                    file($self->root)->slurp;
+            }
+
+    (Again, I removed the normal type checking and sanity/security checks in
+    order to keep things to the point).
+
+    Well, now I start to think that the job of slurping up text really
+    belongs to another dedicated class, since WebPage is about methods on
+    web media, and is not concerned at all with storage or storage mediums.
+    Delegating the job of retrieval to a different class also has the big
+    upsides of making it easier to test each class in turn and gives me more
+    reuseable code. It also makes each class smaller in terms of code line
+    weight, and that promotes understanding.
+
+            package MyApp::WebPage;
+
+            use Moose;
+            use MyApp::Storage
+            use MyApp::Web::Text;
+
+            has root => (is=>'ro', required=>1);
+            has storage => (is=>'ro', required=>1, lazy_build=>1);
+            has text => (is=>'ro', required=>1, lazy_build=>1);
+
+            sub _build_storage {
+                    MyApp::Storage->new(root=>$self->root);
+            }
+
+            sub _build_text {
+                    my ($self) = @_;
+                    $self->storage->get_text;
+            }
+
+    Then what happens when you start to realize Storage needs additional
+    args, or you need to be able to read from a subversion repository or a
+    database? Now you need more control over which Storage class is loaded,
+    and more flexibility in what args are passed. You also find out that you
+    are going to need subclasses of 'MyApp::Web::Text', since some text is
+    going to be HTML and others in Wiki format. You may end up with
+    something like:
+
+            package MyApp::WebPage;
+
+            use Moose;
+
+            has storage_class => (
+                    is => 'ro',
+                    isa => 'ClassName',
+                    required => 1,
+                    default => 'MyApp::Storage',
+                    handles => { create_storage => 'new' },
+            );
+
+            has storage_args => (
+                    is => 'ro',
+                    isa => 'ArrayRef',
+                    required => 1,
+            );
+
+            has storage => (is=>'ro', required=>1, lazy_build=>1);
+
+            sub _build_storage {
+                    my ($self) = @_;
+                    $self->create_storage(@{$self->storage_args});
+            }
+
+
+            has text_class => (
+                    is => 'ro',
+                    isa => 'ClassName',
+                    required => 1,
+                    default => 'MyApp::Text',
+                    handles => { create_text => 'new' },
+            );
+
+            has text_args => (
+                    is => 'ro',
+                    isa => 'ArrayRef',
+                    required => 1,
+            );
+
+            has text => (is=>'ro', required=>1, lazy_build=>1);
+
+            sub _build_text {
+                    my ($self) = @_;
+                    $self->create_text(@{$self->text_args});
+            }
+
+    Which would allow a very flexibile instantiation:
+
+            my $app = MyApp->new(
+                    storage_class=>'MyApp::Storage::WebStorage',
+                    storage_args=>[host_website=>'http://mystorage.com/']
+                    text_class=>'MyApp::WikiText,
+                    text_args=>[wiki_links=>1]
+            );
+
+    But is pretty verbose. And if you wanted to add enough useful hooks so
+    that your subclassers can modify the whole process as needed, then you
+    are going to end up with even more repeated code.
+
+    With MooseX::Role::BuildInstanceOf you could simple do instead:
+
+            package MyApp::WebPage;
+            use Moose;
+            with 'MooseX::Role::BuildInstanceOf' => {target=>'~Storage'};
+            with 'MooseX::Role::BuildInstanceOf' => {target=>'~Text'};
+
+    So basically you are free to concentrate on building your classes and
+    let this role do the heavy lifting of providing a sane system to tie it
+    all together and maintain flexibility to your subclassers.
+
+PARAMETERS
+    This role defines the following parameters:
+
+  target
+    'target' is the only required parameter since it defines the target
+    class that you wish to have aggregated into your class. This should be a
+    real package name in the form of a string, although if you prepend a
+    "::" to the value we will assume the target class is under the current
+    classes namespace. For example:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => '::Page',
+            };
+
+    Would be the same as:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Album::Page',
+            };
+
+    Given a valid target, we will infer prefix and other required bits. If
+    for some reason the default values result in a namespace conflict, you
+    can resolve the conflict by specifying a value.
+
+    You can also prepend a "~" to your 'target' class, in which case we will
+    assume the classes root namespace is the '~' or 'home' namespace. For
+    example:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => '~Folder,
+            };
+
+    Would be the same as:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Folder',
+            };
+
+    In this case we assume that 'MyApp' is the root home namespace.
+
+    Please note that when you specify a 'target' you are setting a default
+    type. You are free to change the target when you instantiate the object,
+    however if you choose an object that is not of the same type as what you
+    specified in target, this will result in a runtime error. For example:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Folder',
+            };
+
+    You could do (assuming 'MyApp::Folder::Music' is a subclass of
+    MyApp::Folder)
+
+            my $album = MyApp::Album->new(folder_class=>'MyApp::Folder::Music');
+
+    However this would generate an error:
+
+            my $album = MyApp::Album->new(folder_class=>'MyApp::NotAFolderAtAll);
+
+  prefix
+    'prefix' is an optional parameter that defines the unique string
+    prepended to each of the generated attributes and methods. By default we
+    take the last part of the namespace passed in 'target' and process it
+    through String::CamelCase to decamelize the path, however if this will
+    result in namespace collision, you can set something unique manually.
+
+    Example:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Folder',
+            };
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Secured::Folder', prefix=> 'secured_folder'
+            };
+
+  constructor
+    This defaults to new. Change this string to point to the actual name of
+    the constructor you wish, such as in the case where you've created your
+    own custom constructors or you are using something like MooseX::Traits
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::ClassWithTraits', constructor => 'new_with_traits',
+            };
+
+  args
+    Although the goal of this role is to offer a lot of flexibility via
+    configuration it also makes sense to set rational defaults, as to help
+    people along for the most common cases. Setting 'args' will create a
+    default set of arguments passed to the target class when we go to create
+    it. If the person using the class chooses to set args, then those will
+    override the defaults.
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Image', args => [source_dir=>'~/Pictures']
+            };
+
+            my $personal_album = MyApp::Album->new;
+            $personal_album->list_images; ## List images from '~/Pictures/'
+
+            my $shared_album = MyApp::Album->new(image_args=>[source_dir=>'/shared']);
+            $shared_album->list_images; ## List images from '/shared'
+
+  fixed_args
+    Similar to 'args', however this args are 'fixed' and will always be sent
+    to the target class at creation time.
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Image', 
+                    args => [source_dir=>'~/Pictures'],
+                    fixed_args => [show_types=>[qw/jpg gif png/]],
+            };
+
+    In this case you could change the source_dir but not the 'show_types' at
+    instantiation time. If your subclasses really need to do this, they
+    would need to override some of the generated methods. See the next
+    section for more information.
+
+  type
+    By default we create an attribute that holds an instance of the
+    'target'. However, in some cases you would prefer to get a fresh
+    instance for each call to {$prefix}. For example, you may have a set of
+    items that are loaded from a directory, where the directory can be
+    updated. In which case you can set the type to 'factory' and instead of
+    an attribute, we will generate a method.
+
+    Default value is 'attribute'.
+
+CODE GENERATION
+    This role creates a number of attributes and methods in your class. All
+    generated items are under the 'prefix' you set, so you should be able to
+    avoid namespace collision. The following section reviews the generated
+    attribute and methods, and has a brief discussion about how or when you
+    may wish to modified them in subclasses, or to create particular
+    effects.
+
+  GENERATED ATTRIBUTES
+    This role generates the following attributes into your class.
+
+   {$prefix}_class
+    This holds a ClassName, which is a normalized and loaded version of the
+    string specified in the 'target' parameter by default. You can put a
+    different class here, but if it's not the same class as specified in the
+    'target' you must ensure that is is a subclass, otherwise you will get a
+    runtime error.
+
+   {$prefix}_args
+    This will contain whatever you specified in 'args' as a default. The
+    person instantiating the class can override them, but you can use this
+    to specify some sane defaults.
+
+   {$prefix}_fixed_args
+    Additional args passed to the target class at instantiation time, which
+    cannot be overidden by the person instantiating the class. Your
+    subclassers, however can, if they are willing to go to trouble (see
+    section below under GENERATED METHODS for more.)
+
+  {$prefix}
+    Contains an instance of the target class (the class name found in
+    {$prefix}_class.) You can easily add delegates here, for example:
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Image', args => [source_dir=>'~/Pictures']
+            };
+
+            '+image' => (handles => [qw/get_image delete_image/]);
+
+    Please note this is the default behavior (what you get if you set the
+    parameter 'type' to 'attribute' or merely leave it default. Please see
+    below for what gets generated when the 'type' is 'factory'.
+
+  GENERATED METHODS
+    This role generates the following methods into your class.
+
+   normalize_{$prefix}_target
+    This examines the string you passed in the target parameter and attempts
+    to normalize it (deal with the :: and ~ shortcuts mentioned above).
+    There's not likely to be user serviceable bit here, unless you are
+    trying to add you own shortcut types.
+
+   _build_{$prefix}_class
+    If you don't set a {$prefix}_class we will use the parameter 'target' as
+    the default.
+
+   _build_{$prefix}_args
+    Sets the default args for your class. Subclasses may wish to modify this
+    if they want to set different defaults.
+
+   _build_{$prefix}_fixed_args
+    as above but for the fixed_args.
+
+   _build_{$prefix}
+    You may wish to modify this if you want more control over how your
+    classes are instantiated.
+
+   merge_{$prefix}_args
+    This controls the process of merging args and fixed_args. This is a good
+    spot to modify if you need more control over exactly how the args are
+    presented. For example, you may wish to supply arguments whos values are
+    from other attributes in th class.
+
+            package MyApp::Album;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Folder',
+            };
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target => 'MyApp::Image',
+            };
+
+            around 'merge_folder_args' => sub {
+                    my ($orig, $self) = @_;
+                    my @args = $self->$orig;
+                    return (
+                            image => $self->image,
+                            @args,
+                    );
+            };
+
+    In the above case the Folder needed an Image as part of its
+    instantiation.
+
+  {$prefix}
+    Returns an instance of the {$prefix}_class using the whatever is in the
+    arguments. Since this is a method you will get a new instance each time.
+
+    You will need to set the 'type' parameter to 'factory'.
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target=>'~Set',
+                    type=>'factory',
+            };
+
+COOKBOOK
+    The following are example usage for this Role.
+
+  Combine with MooseX::Traits
+    MooseX::Traits allows you to apply roles to a class at instantiation
+    time. It does this by adding an additional constructor called
+    'new_with_traits.'. I Find using this role adds an additional level of
+    flexibility which gives the user of my class even more power. If you
+    want to make sure the 'traits' argument is properly passed to your
+    MooseX::Traits based classes, you need to specify the alternative
+    constructor:
+
+            package MyApp::WebPage;
+            use Moose;
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target=>'~Storage',
+            };
+
+            with 'MooseX::Role::BuildInstanceOf' => {
+                    target=>'~Text', 
+                    constructor=>'new_with_traits',
+            };
+
+    Then you can use the 'traits' argument, it will get passed corrected:
+
+            my $app = MyApp->new(
+                    storage_class=>'MyApp::Storage::WebStorage',
+                    storage_args=>[host_website=>'http://mystorage.com/']
+                    text_class=>'MyApp::WikiText,
+                    text_args=>[traits=>[qw/BasicTheme WikiLinks AllowImages/]]
+            );
+
+  You have a bunch of target classes
+    If you have a bunch of classes to target and you like all the defaults,
+    you can just loop:
+
+            package MyApp::WebPage;
+            use Moose;
+
+            foreach my $target(qw/::Storage ::Text ::Image ::Album/) {
+                    with 'MooseX::Role::BuildInstanceOf' => {target=>$target};
+            }
+
+    Which would save you even more boilerplate / repeated code.
+
+TODO
+    Currently the instance slot holding the instance attribute (ie, the
+    'photo' in the above example) only has an 'Object' type constraint on
+    it. We hack in a post instantiation check to make sure the create object
+    isa of the default target type but it is a bit hacky. Would be nice if
+    this code validate against a role as well.
+
+    Would be great if we could detect if the underlying target is using
+    MooseX::Traits or one of the other standard MooseX roles that add an
+    alternative constructor and use that as the default constructor over
+    'new'.
+
+    Since the Role doesn't know anything about the Class, we can't normalize
+    any incoming {$prefix}_class class names in the same way we do with
+    'target'. We could do this with a second attribute that is used to defer
+    checking until after the class is loaded, but this adds even more
+    generated attributes so I'm not convinced its the best way.
+
+SEE ALSO
+    The following modules or resources may be of interest.
+
+    Moose, Moose::Role, MooseX::Role::Parameterized
+
+AUTHOR
+    John Napiorkowski "<jjnapiork@cpan.org>"
+
+COPYRIGHT & LICENSE
+    Copyright 2009, John Napiorkowski "<jjnapiork@cpan.org>"
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
