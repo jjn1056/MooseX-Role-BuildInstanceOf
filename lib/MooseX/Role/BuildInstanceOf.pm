@@ -32,7 +32,7 @@ package MooseX::Role::BuildInstanceOf; {
             my $self = shift @_;
             my $target = $self->target;
             $target = ($target =~m/[::|~](.+)$/)[0];
-            return &decamelize($target);
+            return decamelize($target);
         },
     );
 
