@@ -1,6 +1,6 @@
 package MooseX::Role::BuildInstanceOf; {
 
-    our $VERSION = '0.01';
+    our $VERSION = '0.02';
     use MooseX::Role::Parameterized;
     use 5.008;
 
@@ -816,6 +816,7 @@ L<Moose>, L<Moose::Role>, L<MooseX::Role::Parameterized>
 =head1 AUTHOR
 
 John Napiorkowski C<< <jjnapiork@cpan.org> >>
+Florian Ragwitz C<< <rafl@debian.org> >>
 
 =head1 COPYRIGHT & LICENSE
 

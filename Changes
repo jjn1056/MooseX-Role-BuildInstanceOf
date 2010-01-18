@@ -1,5 +1,12 @@
 This file documents the revision history for Perl extension MooseX::Role::BuildInstanceOf.
 
+0.02  18 January 2010
+    - Various formating and syntax updates to more modern Perl standards
+    - Removed deprecated practice of using '.' in custom Moose type names
+    - Be less crazy about how we declare delegations.
+    - Make the auto-loading type anonymous.
+    - add rafl as a contributor
+
 0.01  02 November 2009
     - First usable version released.  Contains docs, code and tests.
 
