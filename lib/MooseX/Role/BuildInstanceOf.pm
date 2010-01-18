@@ -220,7 +220,9 @@ code into your class:
 
     has photo_class => (
         is => 'ro',
-        isa => 'ClassName',
+        # this type automatically coerces any string by trying to load it as a class
+        isa => 'MooseX::Role::BuildInstanceOf::ClassName',
+        coerce => 1,
         required => 1,
         default => 'MyApp::Album::Photo',
         lazy => 1,
@@ -397,7 +399,8 @@ format.  You may end up with something like:
 
     has storage_class => (
         is => 'ro',
-        isa => 'ClassName',
+        isa => 'MooseX::Role::BuildInstanceOf::ClassName',
+        coerce => 1,
         required => 1,
         default => 'MyApp::Storage',
         handles => { create_storage => 'new' },
@@ -419,7 +422,8 @@ format.  You may end up with something like:
 
     has text_class => (
         is => 'ro',
-        isa => 'ClassName',
+        isa => 'MooseX::Role::BuildInstanceOf::ClassName',
+        coerce => 1,
         required => 1,
         default => 'MyApp::Text',
         handles => { create_text => 'new' },
