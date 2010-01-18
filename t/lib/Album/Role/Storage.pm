@@ -4,7 +4,7 @@ package Album::Role::Storage; {
     use Perl6::Junction qw(any);
 
     requires 'asset_info_from_path', 'items_in_source';
-        
+
     has source => (
         is => 'ro',
         required => 1,

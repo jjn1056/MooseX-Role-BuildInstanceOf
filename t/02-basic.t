@@ -11,7 +11,7 @@ ok my $album = Album->new(
     storage_class=>'Album::Storage::File',
 ), 'Created a new album';
 
-is $album->title, 'My Album', 
+is $album->title, 'My Album',
   'Got expected title';
 
 ok $album->resource_types,

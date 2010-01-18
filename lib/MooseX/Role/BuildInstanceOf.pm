@@ -138,9 +138,9 @@ package MooseX::Role::BuildInstanceOf; {
 
         if($parameters->type eq 'attribute') {
             has $prefix => (
-                is => 'ro', 
-                isa => 'Object', 
-                init_arg => undef, 
+                is => 'ro',
+                isa => 'Object',
+                init_arg => undef,
                 lazy_build => 1,
             );
         } elsif($parameters->type eq 'factory') {
@@ -185,7 +185,7 @@ package MooseX::Role::BuildInstanceOf; {
 
 MooseX::Role::BuildInstanceOf - Less Boilerplate when you need lots of Instances
 
-=head1 SYNOPSIS 
+=head1 SYNOPSIS
 
 Here is the "canonical" form of this role's parameters:
 
@@ -195,14 +195,14 @@ Here is the "canonical" form of this role's parameters:
     with 'MooseX::Role::BuildInstanceOf' => {
         target => 'MyApp::Album::Photo',
         prefix => 'photo',
-        constructor => 'new', 
+        constructor => 'new',
         args => [],
         fixed_args => [],
         extra_class_handles => {},
     };
 
 Given this, your "MyApp::Album" will now have an attribute called 'photo', which
-is an instance of "MyApp::Album::Photo". Other methods and attributes are also 
+is an instance of "MyApp::Album::Photo". Other methods and attributes are also
 created.
 
 Not all parameters are required.  The above could also be written as:
@@ -253,9 +253,9 @@ code into your class:
     };
 
     has photo => (
-        is => 'ro', 
-        isa => 'Object', 
-        init_arg => undef, 
+        is => 'ro',
+        isa => 'Object',
+        init_arg => undef,
         lazy_build => 1,
     );
 
@@ -339,7 +339,7 @@ coercions I'd normally have here.  Please see the test cases in /t for a working
 example.
 
 This retrieves the text for a single webpage.  But what happens when you want
-to reuse the same class to load webpage data from different directories?  
+to reuse the same class to load webpage data from different directories?
 
     package MyApp::WebPage;
 
@@ -385,7 +385,7 @@ class smaller in terms of code line weight, and that promotes understanding.
     }
 
 Then what happens when you start to realize Storage needs additional args, or
-you need to be able to read from a subversion repository or a database?  Now 
+you need to be able to read from a subversion repository or a database?  Now
 you need more control over which Storage class is loaded, and more flexibility
 in what args are passed.  You also find out that you are going to need subclasses
 of 'MyApp::Web::Text', since some text is going to be HTML and others in Wiki
@@ -459,11 +459,11 @@ With L<MooseX::Role::BuildInstanceOf> you could simple do instead:
     with 'MooseX::Role::BuildInstanceOf' => {target=>'~Storage'};
     with 'MooseX::Role::BuildInstanceOf' => {target=>'~Text'};
 
-So basically you are free to concentrate on building your classes and let this 
+So basically you are free to concentrate on building your classes and let this
 role do the heavy lifting of providing a sane system to tie it all together and
 maintain flexibility to your subclassers.
 
-=head1 PARAMETERS 
+=head1 PARAMETERS
 
 This role defines the following parameters:
 
@@ -472,7 +472,7 @@ This role defines the following parameters:
 'target' is the only required parameter since it defines the target class that
 you wish to have aggregated into your class.  This should be a real package
 name in the form of a string, although if you prepend a "::" to the value we
-will assume the target class is under the current classes namespace.  For 
+will assume the target class is under the current classes namespace.  For
 example:
 
     package MyApp::Album;
@@ -492,7 +492,7 @@ Would be the same as:
         target => 'MyApp::Album::Page',
     };
 
-Given a valid target, we will infer prefix and other required bits.  If for 
+Given a valid target, we will infer prefix and other required bits.  If for
 some reason the default values result in a namespace conflict, you can resolve
 the conflict by specifying a value.
 
@@ -520,7 +520,7 @@ In this case we assume that 'MyApp' is the root home namespace.
 
 Please note that when you specify a 'target' you are setting a default type.
 You are free to change the target when you instantiate the object, however if
-you choose an object that is not of the same type as what you specified in 
+you choose an object that is not of the same type as what you specified in
 target, this will result in a runtime error.  For example:
 
     package MyApp::Album;
@@ -540,10 +540,10 @@ However this would generate an error:
 
 =head2 prefix
 
-'prefix' is an optional parameter that defines the unique string prepended to 
+'prefix' is an optional parameter that defines the unique string prepended to
 each of the generated attributes and methods.  By default we take the last
 part of the namespace passed in 'target' and process it through L<String::CamelCase>
-to decamelize the path, however if this will result in namespace collision, 
+to decamelize the path, however if this will result in namespace collision,
 you can set something unique manually.
 
 Example:
@@ -597,23 +597,23 @@ set args, then those will override the defaults.
 =head2 fixed_args
 
 Similar to 'args', however this args are 'fixed' and will always be sent to the
-target class at creation time.  
+target class at creation time.
 
     package MyApp::Album;
     use Moose;
 
     with 'MooseX::Role::BuildInstanceOf' => {
-        target => 'MyApp::Image', 
+        target => 'MyApp::Image',
         args => [source_dir=>'~/Pictures'],
         fixed_args => [show_types=>[qw/jpg gif png/]],
     };
 
-In this case you could change the source_dir but not the 'show_types' at 
+In this case you could change the source_dir but not the 'show_types' at
 instantiation time.  If your subclasses really need to do this, they would
 need to override some of the generated methods.  See the next section for
 more information.
 
-=head2 type 
+=head2 type
 
 By default we create an attribute that holds an instance of the 'target'.
 However, in some cases you would prefer to get a fresh instance for each
@@ -626,8 +626,8 @@ Default value is 'attribute'.
 
 =head1 CODE GENERATION
 
-This role creates a number of attributes and methods in your class.  All 
-generated items are under the 'prefix' you set, so you should be able to 
+This role creates a number of attributes and methods in your class.  All
+generated items are under the 'prefix' you set, so you should be able to
 avoid namespace collision.  The following section reviews the generated
 attribute and methods, and has a brief discussion about how or when you may
 wish to modified them in subclasses, or to create particular effects.
@@ -638,10 +638,10 @@ This role generates the following attributes into your class.
 
 =head3 {$prefix}_class
 
-This holds a ClassName, which is a normalized and loaded version of the 
+This holds a ClassName, which is a normalized and loaded version of the
 string specified in the 'target' parameter by default.  You can put a
 different class here, but if it's not the same class as specified in the
-'target' you must ensure that is is a subclass, otherwise you will get a 
+'target' you must ensure that is is a subclass, otherwise you will get a
 runtime error.
 
 =head3 {$prefix}_args
@@ -671,7 +671,7 @@ You can easily add delegates here, for example:
 
     '+image' => (handles => [qw/get_image delete_image/]);
 
-Please note this is the default behavior (what you get if you set the parameter 
+Please note this is the default behavior (what you get if you set the parameter
 'type' to 'attribute' or merely leave it default.  Please see below for what gets
 generated when the 'type' is 'factory'.
 
@@ -681,14 +681,14 @@ This role generates the following methods into your class.
 
 =head3 normalize_{$prefix}_target
 
-This examines the string you passed in the target parameter and attempts to 
+This examines the string you passed in the target parameter and attempts to
 normalize it (deal with the :: and ~ shortcuts mentioned above).  There's
 not likely to be user serviceable bit here, unless you are trying to add you
 own shortcut types.
 
 =head3 _build_{$prefix}_class
 
-If you don't set a {$prefix}_class we will use the parameter 'target' as the 
+If you don't set a {$prefix}_class we will use the parameter 'target' as the
 default.
 
 =head3 _build_{$prefix}_args
@@ -708,7 +708,7 @@ instantiated.
 =head3 merge_{$prefix}_args
 
 This controls the process of merging args and fixed_args.  This is a good spot
-to modify if you need more control over exactly how the args are presented.  For 
+to modify if you need more control over exactly how the args are presented.  For
 example, you may wish to supply arguments whos values are from other attributes
 in th class.
 
@@ -756,7 +756,7 @@ L<MooseX::Traits> allows you to apply roles to a class at instantiation time.
 It does this by adding an additional constructor called 'new_with_traits.'.  I
 Find using this role adds an additional level of flexibility which gives the
 user of my class even more power.  If you want to make sure the 'traits'
-argument is properly passed to your L<MooseX::Traits> based classes, you need to 
+argument is properly passed to your L<MooseX::Traits> based classes, you need to
 specify the alternative constructor:
 
     package MyApp::WebPage;
@@ -767,7 +767,7 @@ specify the alternative constructor:
     };
 
     with 'MooseX::Role::BuildInstanceOf' => {
-        target=>'~Text', 
+        target=>'~Text',
         constructor=>'new_with_traits',
     };
 
@@ -796,7 +796,7 @@ Which would save you even more boilerplate / repeated code.
 
 =head1 TODO
 
-Currently the instance slot holding the instance attribute (ie, the 'photo' in 
+Currently the instance slot holding the instance attribute (ie, the 'photo' in
 the above example) only has an 'Object' type constraint on it.  We hack in a post
 instantiation check to make sure the create object isa of the default target type
 but it is a bit hacky.  Would be nice if this code validate against a role as well.
@@ -805,8 +805,8 @@ Would be great if we could detect if the underlying target is using L<MooseX::Tr
 or one of the other standard MooseX roles that add an alternative constructor and
 use that as the default constructor over 'new'.
 
-Since the Role doesn't know anything about the Class, we can't normalize any 
-incoming {$prefix}_class class names in the same way we do with 'target'.  We 
+Since the Role doesn't know anything about the Class, we can't normalize any
+incoming {$prefix}_class class names in the same way we do with 'target'.  We
 could do this with a second attribute that is used to defer checking until after
 the class is loaded, but this adds even more generated attributes so I'm not
 convinced its the best way.

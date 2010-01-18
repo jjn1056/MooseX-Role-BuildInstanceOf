@@ -14,7 +14,7 @@ package Album::ResourceTypes; {
 
     coerce 'Album.ResourceTypes.ArrayRefOfClassName',
     from 'ArrayRef[Str]',
-    via { 
+    via {
         Class::MOP::load_class($_) for @$_; $_
     };
 
@@ -33,7 +33,7 @@ package Album::ResourceTypes; {
         lazy_build => 1,
         auto_deref => 1,
     );
-    
+
     has resource_dispatch_table => (
         is => 'ro',
         init_arg => undef,

@@ -12,7 +12,7 @@ package Album; {
     };
 
     with 'MooseX::Role::BuildInstanceOf' => {
-        target => '~ResourceTypes', 
+        target => '~ResourceTypes',
         fixed_args => [
             resources=>[qw/Album::Image Album::Text/],
         ],

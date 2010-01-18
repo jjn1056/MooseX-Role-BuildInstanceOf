@@ -67,7 +67,7 @@ package Album::Set; {
     }
 
     sub slice {
-        my ($self, $offset, $length) = @_; 
+        my ($self, $offset, $length) = @_;
         my @collection = splice(@{$self->collection}, $offset, $length);
         __PACKAGE__->new(
             collection => \@collection,

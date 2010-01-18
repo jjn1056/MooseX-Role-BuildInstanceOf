@@ -2,7 +2,7 @@ package Album::Role::Resource; {
 
     use Moose::Role;
     use MooseX::Types::IO qw(IO);
-    use Perl6::Junction qw(any);    
+    use Perl6::Junction qw(any);
 
     requires 'supported_mime_types';
 
@@ -14,8 +14,8 @@ package Album::Role::Resource; {
     );
 
     has title => (
-        is => 'ro', 
-        isa => 'Str', 
+        is => 'ro',
+        isa => 'Str',
         required => 1,
     );
 
