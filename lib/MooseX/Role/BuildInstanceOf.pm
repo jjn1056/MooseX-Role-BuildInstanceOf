@@ -84,10 +84,8 @@ package MooseX::Role::BuildInstanceOf; {
             isa => 'MooseX::Role::BuildInstanceOf::ClassName',
             lazy_build => 1,
             coerce => 1,
-            handles => sub {
-                return (
-                    "create_".$prefix => $parameters->constructor,
-                );
+            handles => {
+                "create_".$prefix => $parameters->constructor,
             },
         );
 
@@ -226,10 +224,8 @@ code into your class:
         required => 1,
         default => 'MyApp::Album::Photo',
         lazy => 1,
-        handles => sub {
-            return (
-                create_photo => 'new',
-            );
+        handles => {
+            create_photo => 'new',
         },
     );
 
