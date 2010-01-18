@@ -1,14 +1,13 @@
 package Album::Role::Resource; {
 
     use Moose::Role;
-    use MooseX::Types::IO qw(IO);
     use Perl6::Junction qw(any);
 
     requires 'supported_mime_types';
 
     has source_fh => (
         is => 'ro',
-        isa => IO,
+        isa => 'IO::Handle',
         required => 1,
         coerce => 1,
     );
