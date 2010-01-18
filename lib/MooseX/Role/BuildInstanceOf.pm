@@ -64,24 +64,18 @@ package MooseX::Role::BuildInstanceOf; {
         default => sub { 'attribute' },
     );
 
+    use Moose::Util::TypeConstraints;
+    my $tc = subtype as 'ClassName';
+    coerce $tc, from 'Str', via { Class::MOP::load_class($_); $_ };
+    no Moose::Util::TypeConstraints;
+
     role {
-
-        use Class::MOP;
-        use Moose::Util::TypeConstraints;
-
-        subtype 'MooseX::Role::BuildInstanceOf::ClassName',
-        as 'ClassName';
-
-        coerce 'MooseX::Role::BuildInstanceOf::ClassName',
-        from 'Str',
-        via { Class::MOP::load_class($_); $_};
-
         my $parameters = shift @_;
         my $prefix = $parameters->prefix;
 
         has $prefix."_class" => (
             is => 'ro',
-            isa => 'MooseX::Role::BuildInstanceOf::ClassName',
+            isa => $tc,
             lazy_build => 1,
             coerce => 1,
             handles => {
@@ -219,7 +213,7 @@ code into your class:
     has photo_class => (
         is => 'ro',
         # this type automatically coerces any string by trying to load it as a class
-        isa => 'MooseX::Role::BuildInstanceOf::ClassName',
+        isa => $anonymous_type,
         coerce => 1,
         required => 1,
         default => 'MyApp::Album::Photo',
@@ -395,7 +389,8 @@ format.  You may end up with something like:
 
     has storage_class => (
         is => 'ro',
-        isa => 'MooseX::Role::BuildInstanceOf::ClassName',
+        # this type automatically coerces any string by trying to load it as a class
+        isa => $anonymous_type,
         coerce => 1,
         required => 1,
         default => 'MyApp::Storage',
@@ -418,7 +413,8 @@ format.  You may end up with something like:
 
     has text_class => (
         is => 'ro',
-        isa => 'MooseX::Role::BuildInstanceOf::ClassName',
+        # this type automatically coerces any string by trying to load it as a class
+        isa => $anonymous_type,
         coerce => 1,
         required => 1,
         default => 'MyApp::Text',
