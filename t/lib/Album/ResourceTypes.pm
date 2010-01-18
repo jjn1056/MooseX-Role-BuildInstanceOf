@@ -44,7 +44,7 @@ package Album::ResourceTypes; {
 	sub _build_allowed_types {
 		my $self = shift @_;
 		return [uniq map {
-			map {$_->type} $_->supported_mime_types;
+			$_->supported_mime_types;
 		} $self->resources];
 	}
 
@@ -65,7 +65,7 @@ package Album::ResourceTypes; {
 
 	sub process {
 		my ($self, $asset) = @_;
-		my $type = $asset->{mime_type}->type;
+		my $type = $asset->{mime_type};
 		if(my $resource = $self->resource_dispatch_table->{$type}) {
 			if(my $inflated = $resource->process($asset)) {
 				return $inflated;

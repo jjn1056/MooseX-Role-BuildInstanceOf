@@ -32,7 +32,7 @@ package Album::Role::Storage; {
 
 	sub  is_type_allowed {
 		my ($self, $type) = @_;
-		return any($self->allowed_types) eq $type->type ? 1:0;
+		return any($self->allowed_types) eq $type ? 1:0;
 	}
 }
 

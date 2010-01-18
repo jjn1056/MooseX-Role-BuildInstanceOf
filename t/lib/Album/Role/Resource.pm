@@ -21,13 +21,13 @@ package Album::Role::Resource; {
 
 	has mime_type => (
 		is => 'ro',
-		isa => 'Object',
+		isa => 'Str',
 		required => 1,
 	);
 
 	sub process {
 		my ($class, $asset) = @_;
-		my $mime_type = $asset->{mime_type}->type;
+		my $mime_type = $asset->{mime_type};
 		if(any($class->supported_mime_types) eq $mime_type) {
 			return $class->new($asset);
 		} else {

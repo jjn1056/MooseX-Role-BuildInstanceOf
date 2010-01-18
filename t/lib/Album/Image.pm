@@ -1,16 +1,8 @@
 package Album::Image; {
 
 	use Moose;
-	use MIME::Types;
 
-	our $mime_types = MIME::Types->new();
-	our @supported_mime_types_list = map { 
-		$mime_types->mimeTypeOf($_)
-	} qw(gif jpg png);
-
-	sub supported_mime_types {
-		@supported_mime_types_list;
-	}
+	sub supported_mime_types { qw{image/gif image/jpeg image/png} }
 
 	has height => (
 		is => 'ro',
