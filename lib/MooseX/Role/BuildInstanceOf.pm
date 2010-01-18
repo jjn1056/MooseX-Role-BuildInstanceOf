@@ -69,10 +69,10 @@ package MooseX::Role::BuildInstanceOf; {
         use Class::MOP;
         use Moose::Util::TypeConstraints;
 
-        subtype 'MooseX.Role.BuildInstanceOf.ClassName',
+        subtype 'MooseX::Role::BuildInstanceOf::ClassName',
         as 'ClassName';
 
-        coerce 'MooseX.Role.BuildInstanceOf.ClassName',
+        coerce 'MooseX::Role::BuildInstanceOf::ClassName',
         from 'Str',
         via { Class::MOP::load_class($_); $_};
 
@@ -81,7 +81,7 @@ package MooseX::Role::BuildInstanceOf; {
 
         has $prefix."_class" => (
             is => 'ro',
-            isa => 'MooseX.Role.BuildInstanceOf.ClassName',
+            isa => 'MooseX::Role::BuildInstanceOf::ClassName',
             lazy_build => 1,
             coerce => 1,
             handles => sub {
