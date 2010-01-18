@@ -1,184 +1,184 @@
 package MooseX::Role::BuildInstanceOf; {
 
-	our $VERSION = '0.01';
-	use MooseX::Role::Parameterized;
-	use 5.008;
+    our $VERSION = '0.01';
+    use MooseX::Role::Parameterized;
+    use 5.008;
 
     parameter 'target' => (
         isa  => 'Str',
-		is => 'ro',
+        is => 'ro',
         required => 1,
-		coerce => 1
+        coerce => 1
     );
 
-	sub decamelize {
-		my $s = shift;
-		$s =~ s{([^a-zA-Z]?)([A-Z]*)([A-Z])([a-z]?)}{
-			my $fc = pos($s)==0;
-			my ($p0,$p1,$p2,$p3) = ($1,lc$2,lc$3,$4);
-			my $t = $p0 || $fc ? $p0 : '_';
-			$t .= $p3 ? $p1 ? "${p1}_$p2$p3" : "$p2$p3" : "$p1$p2";
-			$t;
-		}ge;
-		$s;
-	}
+    sub decamelize {
+        my $s = shift;
+        $s =~ s{([^a-zA-Z]?)([A-Z]*)([A-Z])([a-z]?)}{
+            my $fc = pos($s)==0;
+            my ($p0,$p1,$p2,$p3) = ($1,lc$2,lc$3,$4);
+            my $t = $p0 || $fc ? $p0 : '_';
+            $t .= $p3 ? $p1 ? "${p1}_$p2$p3" : "$p2$p3" : "$p1$p2";
+            $t;
+        }ge;
+        $s;
+    }
 
     parameter 'prefix' => (
         isa  => 'Str',
-		is => 'ro',
-		required => 1,
-		lazy => 1,
-		default => sub {
-			my $self = shift @_;
-			my $target = $self->target;
-			$target = ($target =~m/[::|~](.+)$/)[0];
-			return &decamelize($target);
-		},
+        is => 'ro',
+        required => 1,
+        lazy => 1,
+        default => sub {
+            my $self = shift @_;
+            my $target = $self->target;
+            $target = ($target =~m/[::|~](.+)$/)[0];
+            return &decamelize($target);
+        },
     );
 
     parameter 'constructor' => (
         isa  => 'Str',
-		is => 'ro',
+        is => 'ro',
         required => 1,
-		default => 'new',
+        default => 'new',
     );
 
     parameter 'args' => (
         isa  => 'ArrayRef',
-		is => 'ro',
+        is => 'ro',
         required => 1,
-		default => sub { [] },
+        default => sub { [] },
     );
 
     parameter 'fixed_args' => (
         isa  => 'ArrayRef',
-		is => 'ro',
+        is => 'ro',
         required => 1,
-		default => sub { [] },
+        default => sub { [] },
     );
 
-	parameter 'type' => (
-		isa => 'Str',
-		is => 'ro',
-		required => 1,
-		default => sub { 'attribute' },
-	);
+    parameter 'type' => (
+        isa => 'Str',
+        is => 'ro',
+        required => 1,
+        default => sub { 'attribute' },
+    );
 
-	role {
+    role {
 
-		use Class::MOP;
-		use Moose::Util::TypeConstraints;
+        use Class::MOP;
+        use Moose::Util::TypeConstraints;
 
-		subtype 'MooseX.Role.BuildInstanceOf.ClassName',
-		as 'ClassName';
+        subtype 'MooseX.Role.BuildInstanceOf.ClassName',
+        as 'ClassName';
 
-		coerce 'MooseX.Role.BuildInstanceOf.ClassName',
-		from 'Str',
-		via { Class::MOP::load_class($_); $_};
+        coerce 'MooseX.Role.BuildInstanceOf.ClassName',
+        from 'Str',
+        via { Class::MOP::load_class($_); $_};
 
-		my $parameters = shift @_;
-		my $prefix = $parameters->prefix;
+        my $parameters = shift @_;
+        my $prefix = $parameters->prefix;
 
-		has $prefix."_class" => (
-			is => 'ro',
-			isa => 'MooseX.Role.BuildInstanceOf.ClassName',
-			lazy_build => 1,
-			coerce => 1,
-			handles => sub {
-				return (
-					"create_".$prefix => $parameters->constructor,
-				);
-			},
-		);
+        has $prefix."_class" => (
+            is => 'ro',
+            isa => 'MooseX.Role.BuildInstanceOf.ClassName',
+            lazy_build => 1,
+            coerce => 1,
+            handles => sub {
+                return (
+                    "create_".$prefix => $parameters->constructor,
+                );
+            },
+        );
 
-		method "normalize_".$prefix."target" => sub {
-			my $self = shift @_;
-			my $class = ref $self ? ref $self:$self;
-			my $target = $parameters->target;
+        method "normalize_".$prefix."target" => sub {
+            my $self = shift @_;
+            my $class = ref $self ? ref $self:$self;
+            my $target = $parameters->target;
 
-			if($target =~m/^::/) {
-				$target = $class.$target;
-			} elsif($target =~s/^~//) {
-				my $first = ($class =~m/^(.+?)::/)[0];
-				$first = $first ? $first : $class;
-				$target = $first.'::'.$target;  ## get anything!
-			}
+            if($target =~m/^::/) {
+                $target = $class.$target;
+            } elsif($target =~s/^~//) {
+                my $first = ($class =~m/^(.+?)::/)[0];
+                $first = $first ? $first : $class;
+                $target = $first.'::'.$target;  ## get anything!
+            }
 
-			return $target;
-		};
+            return $target;
+        };
 
-		method "_build_". $prefix ."_class" => sub {
-			my $normalize_target = "normalize_".$prefix."target";
-			return shift->$normalize_target;
-		};
+        method "_build_". $prefix ."_class" => sub {
+            my $normalize_target = "normalize_".$prefix."target";
+            return shift->$normalize_target;
+        };
 
-		has $prefix."_args" => (
-			is => 'ro',
-			isa => 'ArrayRef',
-			lazy_build => 1,
-		);
+        has $prefix."_args" => (
+            is => 'ro',
+            isa => 'ArrayRef',
+            lazy_build => 1,
+        );
 
-		method "_build_". $prefix ."_args" => sub {
-			return $parameters->args;
-		};
+        method "_build_". $prefix ."_args" => sub {
+            return $parameters->args;
+        };
 
-		has $prefix."_fixed_args" => (
-			is => 'ro',
-			init_arg => undef,
-			isa => 'ArrayRef',
-			lazy_build => 1,
-		);
+        has $prefix."_fixed_args" => (
+            is => 'ro',
+            init_arg => undef,
+            isa => 'ArrayRef',
+            lazy_build => 1,
+        );
 
-		method "_build_". $prefix ."_fixed_args" => sub {
-			return $parameters->fixed_args;
-		};
+        method "_build_". $prefix ."_fixed_args" => sub {
+            return $parameters->fixed_args;
+        };
 
-		## This needs to be broken out into roles or something
-		## not so lame...
+        ## This needs to be broken out into roles or something
+        ## not so lame...
 
-		if($parameters->type eq 'attribute') {
-			has $prefix => (
-				is => 'ro', 
-				isa => 'Object', 
-				init_arg => undef, 
-				lazy_build => 1,
-			);
-		} elsif($parameters->type eq 'factory') {
-			method "$prefix", sub {
-				my $self = shift @_;
-				my $build = "_build_".$prefix;
-				return $self->$build;
-			}
-		} else {
-			die $parameters->type ." is not a recognized type";
-		}
+        if($parameters->type eq 'attribute') {
+            has $prefix => (
+                is => 'ro', 
+                isa => 'Object', 
+                init_arg => undef, 
+                lazy_build => 1,
+            );
+        } elsif($parameters->type eq 'factory') {
+            method "$prefix", sub {
+                my $self = shift @_;
+                my $build = "_build_".$prefix;
+                return $self->$build;
+            }
+        } else {
+            die $parameters->type ." is not a recognized type";
+        }
 
-		method "_build_". $prefix => sub {
-			my $self = shift @_;
-			my $create = "create_".$prefix;
-			my $merge = "merge_".$prefix."_args";
-			my $instance = $self->$create($self->$merge);
+        method "_build_". $prefix => sub {
+            my $self = shift @_;
+            my $create = "create_".$prefix;
+            my $merge = "merge_".$prefix."_args";
+            my $instance = $self->$create($self->$merge);
 
-			my $normalize_target = "normalize_".$prefix."target";
-			my $target_class = $self->$normalize_target;
+            my $normalize_target = "normalize_".$prefix."target";
+            my $target_class = $self->$normalize_target;
 
-			if($instance->isa($target_class)) {
-				return $instance;
-			} else {
-				die ref($instance)."is not a $target_class.";
-			}
-		};
+            if($instance->isa($target_class)) {
+                return $instance;
+            } else {
+                die ref($instance)."is not a $target_class.";
+            }
+        };
 
-		method "merge_".$prefix ."_args" => sub {
-			my $self = shift @_;
-			my $fixed_args = $prefix."_fixed_args";
-			my $args = $prefix."_args";
-			return (
-				@{$self->$fixed_args},
-				@{$self->$args},
-			);
-		};
-	}
+        method "merge_".$prefix ."_args" => sub {
+            my $self = shift @_;
+            my $fixed_args = $prefix."_fixed_args";
+            my $args = $prefix."_args";
+            return (
+                @{$self->$fixed_args},
+                @{$self->$args},
+            );
+        };
+    }
 } 1;
 
 =head1 NAME
@@ -189,17 +189,17 @@ MooseX::Role::BuildInstanceOf - Less Boilerplate when you need lots of Instances
 
 Here is the "canonical" form of this role's parameters:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Album::Photo',
-		prefix => 'photo',
-		constructor => 'new', 
-		args => [],
-		fixed_args => [],
-		extra_class_handles => {},
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Album::Photo',
+        prefix => 'photo',
+        constructor => 'new', 
+        args => [],
+        fixed_args => [],
+        extra_class_handles => {},
+    };
 
 Given this, your "MyApp::Album" will now have an attribute called 'photo', which
 is an instance of "MyApp::Album::Photo". Other methods and attributes are also 
@@ -207,73 +207,73 @@ created.
 
 Not all parameters are required.  The above could also be written as:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {target => '::Photo'};
+    with 'MooseX::Role::BuildInstanceOf' => {target => '::Photo'};
 
 Given the above parameters, this role calls a template and builds the following
 code into your class:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	has photo_class => (
-		is => 'ro',
-		isa => 'ClassName',
-		required => 1,
-		default => 'MyApp::Album::Photo',
-		lazy => 1,
-		handles => sub {
-			return (
-				create_photo => 'new',
-			);
-		},
-	);
+    has photo_class => (
+        is => 'ro',
+        isa => 'ClassName',
+        required => 1,
+        default => 'MyApp::Album::Photo',
+        lazy => 1,
+        handles => sub {
+            return (
+                create_photo => 'new',
+            );
+        },
+    );
 
-	has photo_args => (
-		is => 'ro',
-		isa => 'ArrayRef',
-		lazy_build => 1,
-	);
+    has photo_args => (
+        is => 'ro',
+        isa => 'ArrayRef',
+        lazy_build => 1,
+    );
 
-	sub _build_photo_args {
-		return []; ## Populated from 'args' parameter
-	};
+    sub _build_photo_args {
+        return []; ## Populated from 'args' parameter
+    };
 
-	has photo_fixed_args => (
-		is => 'ro',
-		init_arg => undef,
-		isa => 'ArrayRef',
-		lazy_build => 1,
-	);
+    has photo_fixed_args => (
+        is => 'ro',
+        init_arg => undef,
+        isa => 'ArrayRef',
+        lazy_build => 1,
+    );
 
-	sub _build_args_fixed_args {
-		return []; ## Populated from 'fixed_args' parameter
-	};
+    sub _build_args_fixed_args {
+        return []; ## Populated from 'fixed_args' parameter
+    };
 
-	has photo => (
-		is => 'ro', 
-		isa => 'Object', 
-		init_arg => undef, 
-		lazy_build => 1,
-	);
+    has photo => (
+        is => 'ro', 
+        isa => 'Object', 
+        init_arg => undef, 
+        lazy_build => 1,
+    );
 
-	sub _build_photo {
-		my $self = shift @_;
-		my $create = 'create_photo';
-		$self->$create($self->merge_album_args);
-	}
+    sub _build_photo {
+        my $self = shift @_;
+        my $create = 'create_photo';
+        $self->$create($self->merge_album_args);
+    }
 
-	sub merge_photo_args {
-		my $self = shift @_;
-		my $fixed_args = "photo_fixed_args";
-		my $args = "photo_args";
-		return (
-			@{$self->$fixed_args},
-			@{$self->$args},
-		);
-	};
+    sub merge_photo_args {
+        my $self = shift @_;
+        my $fixed_args = "photo_fixed_args";
+        my $args = "photo_args";
+        return (
+            @{$self->$fixed_args},
+            @{$self->$args},
+        );
+    };
 
 The above example removed a few extraneous bits, we were getting a little long
 for a SYNOPSIS.
@@ -286,7 +286,7 @@ for examples.
 You can now instantiate your class with the following (assuming your MyApp::Photos
 class allows for a 'source_dir' attribute.)
 
-	my $album = MyApp::Album(photo_args=>[source_dir=>'~/photos']);
+    my $album = MyApp::Album(photo_args=>[source_dir=>'~/photos']);
 
 The overall goal here being to allow you to defer choice of class and arguments
 to when the class is actually used, thus achieving maximum flexibility.  We can
@@ -322,17 +322,17 @@ repeated Boilerplate code and logic, particularly in my main application class
 which often will marshall several underlying classes, each of which is
 performing a particular job.  For example:
 
-	package MyApp::WebPage;
+    package MyApp::WebPage;
 
-	use Moose;
-	use Path::Class qw(file);
-	use MyApp::Web::Text;
+    use Moose;
+    use Path::Class qw(file);
+    use MyApp::Web::Text;
 
-	has text => (is=>'ro', required=>1, lazy_build=>1);
+    has text => (is=>'ro', required=>1, lazy_build=>1);
 
-	sub _build_text {
-		file("~/text_for_webpage")->slurp;
-	}
+    sub _build_text {
+        file("~/text_for_webpage")->slurp;
+    }
 
 NOTE: For clarity I removed some of the extra type constraint checking and type
 coercions I'd normally have here.  Please see the test cases in /t for a working
@@ -341,19 +341,19 @@ example.
 This retrieves the text for a single webpage.  But what happens when you want
 to reuse the same class to load webpage data from different directories?  
 
-	package MyApp::WebPage;
+    package MyApp::WebPage;
 
-	use Moose;
-	use Path::Class qw(file);
-	use MyApp::Web::Text;
+    use Moose;
+    use Path::Class qw(file);
+    use MyApp::Web::Text;
 
-	has root => (is=>'ro', required=>1);
-	has text => (is=>'ro', required=>1, lazy_build=>1);
+    has root => (is=>'ro', required=>1);
+    has text => (is=>'ro', required=>1, lazy_build=>1);
 
-	sub _build_text {
-		my ($self) = @_;
-		file($self->root)->slurp;
-	}
+    sub _build_text {
+        my ($self) = @_;
+        file($self->root)->slurp;
+    }
 
 (Again, I removed the normal type checking and sanity/security checks in order
 to keep things to the point).
@@ -365,24 +365,24 @@ retrieval to a different class also has the big upsides of making it easier to
 test each class in turn and gives me more reuseable code.  It also makes each
 class smaller in terms of code line weight, and that promotes understanding.
 
-	package MyApp::WebPage;
+    package MyApp::WebPage;
 
-	use Moose;
-	use MyApp::Storage
-	use MyApp::Web::Text;
+    use Moose;
+    use MyApp::Storage
+    use MyApp::Web::Text;
 
-	has root => (is=>'ro', required=>1);
-	has storage => (is=>'ro', required=>1, lazy_build=>1);
-	has text => (is=>'ro', required=>1, lazy_build=>1);
+    has root => (is=>'ro', required=>1);
+    has storage => (is=>'ro', required=>1, lazy_build=>1);
+    has text => (is=>'ro', required=>1, lazy_build=>1);
 
-	sub _build_storage {
-		MyApp::Storage->new(root=>$self->root);
-	}
+    sub _build_storage {
+        MyApp::Storage->new(root=>$self->root);
+    }
 
-	sub _build_text {
-		my ($self) = @_;
-		$self->storage->get_text;
-	}
+    sub _build_text {
+        my ($self) = @_;
+        $self->storage->get_text;
+    }
 
 Then what happens when you start to realize Storage needs additional args, or
 you need to be able to read from a subversion repository or a database?  Now 
@@ -391,61 +391,61 @@ in what args are passed.  You also find out that you are going to need subclasse
 of 'MyApp::Web::Text', since some text is going to be HTML and others in Wiki
 format.  You may end up with something like:
 
-	package MyApp::WebPage;
+    package MyApp::WebPage;
 
-	use Moose;
+    use Moose;
 
-	has storage_class => (
-		is => 'ro',
-		isa => 'ClassName',
-		required => 1,
-		default => 'MyApp::Storage',
-		handles => { create_storage => 'new' },
-	);
+    has storage_class => (
+        is => 'ro',
+        isa => 'ClassName',
+        required => 1,
+        default => 'MyApp::Storage',
+        handles => { create_storage => 'new' },
+    );
 
-	has storage_args => (
-		is => 'ro',
-		isa => 'ArrayRef',
-		required => 1,
-	);
+    has storage_args => (
+        is => 'ro',
+        isa => 'ArrayRef',
+        required => 1,
+    );
 
-	has storage => (is=>'ro', required=>1, lazy_build=>1);
+    has storage => (is=>'ro', required=>1, lazy_build=>1);
 
-	sub _build_storage {
-		my ($self) = @_;
-		$self->create_storage(@{$self->storage_args});
-	}
+    sub _build_storage {
+        my ($self) = @_;
+        $self->create_storage(@{$self->storage_args});
+    }
 
 
-	has text_class => (
-		is => 'ro',
-		isa => 'ClassName',
-		required => 1,
-		default => 'MyApp::Text',
-		handles => { create_text => 'new' },
-	);
+    has text_class => (
+        is => 'ro',
+        isa => 'ClassName',
+        required => 1,
+        default => 'MyApp::Text',
+        handles => { create_text => 'new' },
+    );
 
-	has text_args => (
-		is => 'ro',
-		isa => 'ArrayRef',
-		required => 1,
-	);
+    has text_args => (
+        is => 'ro',
+        isa => 'ArrayRef',
+        required => 1,
+    );
 
-	has text => (is=>'ro', required=>1, lazy_build=>1);
+    has text => (is=>'ro', required=>1, lazy_build=>1);
 
-	sub _build_text {
-		my ($self) = @_;
-		$self->create_text(@{$self->text_args});
-	}
+    sub _build_text {
+        my ($self) = @_;
+        $self->create_text(@{$self->text_args});
+    }
 
 Which would allow a very flexibile instantiation:
 
-	my $app = MyApp->new(
-		storage_class=>'MyApp::Storage::WebStorage',
-		storage_args=>[host_website=>'http://mystorage.com/']
-		text_class=>'MyApp::WikiText,
-		text_args=>[wiki_links=>1]
-	);
+    my $app = MyApp->new(
+        storage_class=>'MyApp::Storage::WebStorage',
+        storage_args=>[host_website=>'http://mystorage.com/']
+        text_class=>'MyApp::WikiText,
+        text_args=>[wiki_links=>1]
+    );
 
 
 But is pretty verbose.  And if you wanted to add enough useful hooks so that
@@ -454,10 +454,10 @@ end up with even more repeated code.
 
 With L<MooseX::Role::BuildInstanceOf> you could simple do instead:
 
-	package MyApp::WebPage;
-	use Moose;
-	with 'MooseX::Role::BuildInstanceOf' => {target=>'~Storage'};
-	with 'MooseX::Role::BuildInstanceOf' => {target=>'~Text'};
+    package MyApp::WebPage;
+    use Moose;
+    with 'MooseX::Role::BuildInstanceOf' => {target=>'~Storage'};
+    with 'MooseX::Role::BuildInstanceOf' => {target=>'~Text'};
 
 So basically you are free to concentrate on building your classes and let this 
 role do the heavy lifting of providing a sane system to tie it all together and
@@ -475,22 +475,22 @@ name in the form of a string, although if you prepend a "::" to the value we
 will assume the target class is under the current classes namespace.  For 
 example:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => '::Page',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => '::Page',
+    };
 
 Would be the same as:
 
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Album::Page',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Album::Page',
+    };
 
 Given a valid target, we will infer prefix and other required bits.  If for 
 some reason the default values result in a namespace conflict, you can resolve
@@ -499,22 +499,22 @@ the conflict by specifying a value.
 You can also prepend a "~" to your 'target' class, in which case we will
 assume the classes root namespace is the '~' or 'home' namespace.  For example:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => '~Folder,
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => '~Folder,
+    };
 
 Would be the same as:
 
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Folder',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Folder',
+    };
 
 In this case we assume that 'MyApp' is the root home namespace.
 
@@ -523,20 +523,20 @@ You are free to change the target when you instantiate the object, however if
 you choose an object that is not of the same type as what you specified in 
 target, this will result in a runtime error.  For example:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Folder',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Folder',
+    };
 
 You could do (assuming 'MyApp::Folder::Music' is a subclass of MyApp::Folder)
 
-	my $album = MyApp::Album->new(folder_class=>'MyApp::Folder::Music');
+    my $album = MyApp::Album->new(folder_class=>'MyApp::Folder::Music');
 
 However this would generate an error:
 
-	my $album = MyApp::Album->new(folder_class=>'MyApp::NotAFolderAtAll);
+    my $album = MyApp::Album->new(folder_class=>'MyApp::NotAFolderAtAll);
 
 =head2 prefix
 
@@ -548,16 +548,16 @@ you can set something unique manually.
 
 Example:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Folder',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Folder',
+    };
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Secured::Folder', prefix=> 'secured_folder'
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Secured::Folder', prefix=> 'secured_folder'
+    };
 
 =head2 constructor
 
@@ -565,12 +565,12 @@ This defaults to new.  Change this string to point to the actual name of the
 constructor you wish, such as in the case where you've created your own custom
 constructors or you are using something like L<MooseX::Traits>
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::ClassWithTraits', constructor => 'new_with_traits',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::ClassWithTraits', constructor => 'new_with_traits',
+    };
 
 =head2 args
 
@@ -580,18 +580,18 @@ common cases.  Setting 'args' will create a default set of arguments passed to t
 target class when we go to create it.  If the person using the class chooses to
 set args, then those will override the defaults.
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Image', args => [source_dir=>'~/Pictures']
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Image', args => [source_dir=>'~/Pictures']
+    };
 
-	my $personal_album = MyApp::Album->new;
-	$personal_album->list_images; ## List images from '~/Pictures/'
+    my $personal_album = MyApp::Album->new;
+    $personal_album->list_images; ## List images from '~/Pictures/'
 
-	my $shared_album = MyApp::Album->new(image_args=>[source_dir=>'/shared']);
-	$shared_album->list_images; ## List images from '/shared'
+    my $shared_album = MyApp::Album->new(image_args=>[source_dir=>'/shared']);
+    $shared_album->list_images; ## List images from '/shared'
 
 
 =head2 fixed_args
@@ -599,14 +599,14 @@ set args, then those will override the defaults.
 Similar to 'args', however this args are 'fixed' and will always be sent to the
 target class at creation time.  
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Image', 
-		args => [source_dir=>'~/Pictures'],
-		fixed_args => [show_types=>[qw/jpg gif png/]],
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Image', 
+        args => [source_dir=>'~/Pictures'],
+        fixed_args => [show_types=>[qw/jpg gif png/]],
+    };
 
 In this case you could change the source_dir but not the 'show_types' at 
 instantiation time.  If your subclasses really need to do this, they would
@@ -662,14 +662,14 @@ METHODS for more.)
 Contains an instance of the target class (the class name found in {$prefix}_class.)
 You can easily add delegates here, for example:
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Image', args => [source_dir=>'~/Pictures']
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Image', args => [source_dir=>'~/Pictures']
+    };
 
-	'+image' => (handles => [qw/get_image delete_image/]);
+    '+image' => (handles => [qw/get_image delete_image/]);
 
 Please note this is the default behavior (what you get if you set the parameter 
 'type' to 'attribute' or merely leave it default.  Please see below for what gets
@@ -712,25 +712,25 @@ to modify if you need more control over exactly how the args are presented.  For
 example, you may wish to supply arguments whos values are from other attributes
 in th class.
 
-	package MyApp::Album;
-	use Moose;
+    package MyApp::Album;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Folder',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Folder',
+    };
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target => 'MyApp::Image',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Image',
+    };
 
-	around 'merge_folder_args' => sub {
-		my ($orig, $self) = @_;
-		my @args = $self->$orig;
-		return (
-			image => $self->image,
-			@args,
-		);
-	};
+    around 'merge_folder_args' => sub {
+        my ($orig, $self) = @_;
+        my @args = $self->$orig;
+        return (
+            image => $self->image,
+            @args,
+        );
+    };
 
 In the above case the Folder needed an Image as part of its instantiation.
 
@@ -741,10 +741,10 @@ Since this is a method you will get a new instance each time.
 
 You will need to set the 'type' parameter to 'factory'.
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target=>'~Set',
-		type=>'factory',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target=>'~Set',
+        type=>'factory',
+    };
 
 =head1 COOKBOOK
 
@@ -759,38 +759,38 @@ user of my class even more power.  If you want to make sure the 'traits'
 argument is properly passed to your L<MooseX::Traits> based classes, you need to 
 specify the alternative constructor:
 
-	package MyApp::WebPage;
-	use Moose;
+    package MyApp::WebPage;
+    use Moose;
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target=>'~Storage',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target=>'~Storage',
+    };
 
-	with 'MooseX::Role::BuildInstanceOf' => {
-		target=>'~Text', 
-		constructor=>'new_with_traits',
-	};
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target=>'~Text', 
+        constructor=>'new_with_traits',
+    };
 
 Then you can use the 'traits' argument, it will get passed corrected:
 
-	my $app = MyApp->new(
-		storage_class=>'MyApp::Storage::WebStorage',
-		storage_args=>[host_website=>'http://mystorage.com/']
-		text_class=>'MyApp::WikiText,
-		text_args=>[traits=>[qw/BasicTheme WikiLinks AllowImages/]]
-	);
+    my $app = MyApp->new(
+        storage_class=>'MyApp::Storage::WebStorage',
+        storage_args=>[host_website=>'http://mystorage.com/']
+        text_class=>'MyApp::WikiText,
+        text_args=>[traits=>[qw/BasicTheme WikiLinks AllowImages/]]
+    );
 
 =head2 You have a bunch of target classes
 
 If you have a bunch of classes to target and you like all the defaults, you
 can just loop:
 
-	package MyApp::WebPage;
-	use Moose;
+    package MyApp::WebPage;
+    use Moose;
 
-	foreach my $target(qw/::Storage ::Text ::Image ::Album/) {
-		with 'MooseX::Role::BuildInstanceOf' => {target=>$target};
-	}
+    foreach my $target(qw/::Storage ::Text ::Image ::Album/) {
+        with 'MooseX::Role::BuildInstanceOf' => {target=>$target};
+    }
 
 Which would save you even more boilerplate / repeated code.
 

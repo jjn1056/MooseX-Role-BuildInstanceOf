@@ -1,10 +1,10 @@
 package Album::Text; {
 
-	use Moose;
+    use Moose;
 
-	sub supported_mime_types { qw{text/plain} }
+    sub supported_mime_types { qw{text/plain} }
 
-	with "Album::Role::Resource";
+    with "Album::Role::Resource";
 }
 
 1;

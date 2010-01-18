@@ -1,28 +1,28 @@
 package Album::Storage::File; {
 
-	use Moose;
-	use MooseX::Types::Path::Class qw(Dir File);
+    use Moose;
+    use MooseX::Types::Path::Class qw(Dir File);
 
-	extends 'Album::Storage';
+    extends 'Album::Storage';
 
-	sub items_in_source {
-		my $self = shift @_;
-		my $source = $self->source;
-		unless(-e $source) {
-			die "$source does not exist";
-		}
-		$source->children;
-	}
+    sub items_in_source {
+        my $self = shift @_;
+        my $source = $self->source;
+        unless(-e $source) {
+            die "$source does not exist";
+        }
+        $source->children;
+    }
 
-	sub asset_info_from_path {
-		my ($self, $path) = @_;
-		unless(is_File($path)) {
-			$path = to_Path($path);
-		}
-		unless(-e $path) {
-			die "$path does not exist";
-		}
-		my ($title, $ext) = $path->basename =~ /^(.*)\.(.*?)$/;
+    sub asset_info_from_path {
+        my ($self, $path) = @_;
+        unless(is_File($path)) {
+            $path = to_Path($path);
+        }
+        unless(-e $path) {
+            die "$path does not exist";
+        }
+        my ($title, $ext) = $path->basename =~ /^(.*)\.(.*?)$/;
         return {
             source_fh => $path->openr,
             title     => $title,
@@ -32,12 +32,12 @@ package Album::Storage::File; {
               :                 'application/octet-stream'
             ),
         };
-	}
+    }
 
-	has '+source' => (
-		isa => Dir,
-		coerce => 1,
-	);
+    has '+source' => (
+        isa => Dir,
+        coerce => 1,
+    );
 }
 
 1;

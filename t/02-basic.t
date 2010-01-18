@@ -7,8 +7,8 @@ use_ok 'Album',
   'No trouble loading the Album class';
 
 ok my $album = Album->new(
-	storage_args=>[source=>'./t/share'],
-	storage_class=>'Album::Storage::File',
+    storage_args=>[source=>'./t/share'],
+    storage_class=>'Album::Storage::File',
 ), 'Created a new album';
 
 is $album->title, 'My Album', 
