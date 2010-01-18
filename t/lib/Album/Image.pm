@@ -2,7 +2,6 @@ package Album::Image; {
 
 	use Moose;
 	use MIME::Types;
-	use Image::ExifTool qw(ImageInfo);
 
 	our $mime_types = MIME::Types->new();
 	our @supported_mime_types_list = map { 
@@ -17,25 +16,15 @@ package Album::Image; {
 		is => 'ro',
 		isa => 'Int',
 		required => 1,
+        default => 42,
 	);
 
 	has width => (
 		is => 'ro',
 		isa => 'Int',
 		required => 1,
+        default => 23,
 	);
-
-	around BUILDARGS => sub {
-		my($orig, $class, @args) = @_;
-		my $args = $class->$orig(@args);
-		my $info = ImageInfo($args->{source_fh}, 'ImageHeight','ImageWidth');
-
-		return {
-			height => $info->{ImageHeight},
-			width => $info->{ImageWidth},
-			%$args,
-		};
-	};
 
 	with "Album::Role::Resource";
 }

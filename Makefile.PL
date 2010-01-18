@@ -12,7 +12,6 @@ build_requires 'Test::More' => '0.94';
 build_requires 'MooseX::Types::IO' => '0.03';
 build_requires 'MooseX::Types::Path::Class';
 build_requires 'MIME::Types';
-build_requires 'Image::ExifTool';
 build_requires 'Perl6::Junction';
 build_requires 'MooseX::Iterator';
 
