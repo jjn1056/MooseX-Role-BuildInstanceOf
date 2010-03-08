@@ -7,12 +7,12 @@ package Album; {
     };
 
     with 'MooseX::Role::BuildInstanceOf' => {
-        target => '~Set',
+        target => '::Set',
         type => 'factory',
     };
 
     with 'MooseX::Role::BuildInstanceOf' => {
-        target => '~ResourceTypes',
+        target => 'Album::ResourceTypes',
         fixed_args => [
             resources=>[qw/Album::Image Album::Text/],
         ],
