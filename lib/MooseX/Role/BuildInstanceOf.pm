@@ -1,6 +1,6 @@
 package MooseX::Role::BuildInstanceOf; {
 
-    our $VERSION = '0.04';
+    our $VERSION = '0.05';
     use MooseX::Role::Parameterized;
     use 5.008;
 
@@ -131,7 +131,6 @@ package MooseX::Role::BuildInstanceOf; {
         if($parameters->type eq 'attribute') {
             has $prefix => (
                 is => 'ro',
-                isa => 'Object',
                 init_arg => undef,
                 lazy_build => 1,
             );
@@ -197,15 +196,22 @@ Given this, your "MyApp::Album" will now have an attribute called 'photo', which
 is an instance of "MyApp::Album::Photo". Other methods and attributes are also
 created.
 
-Not all parameters are required.  The above could also be written as:
+    my $album = MyApp::Album->new;
+    my $photo = $album->photo; ## $photo ISA MyApp::Album::Photo
+
+Not all parameters are required.  We attempt sane defaults, for example the above
+could also be written as:
 
     package MyApp::Album;
     use Moose;
 
     with 'MooseX::Role::BuildInstanceOf' => {target => '::Photo'};
 
-Given the above parameters, this role calls a template and builds the following
-code into your class:
+And could be constructed and used as in the preceeding example.
+
+Using this role is basically shorthand to create attributes and method.  Think
+of it like a template.  Given the above parameters, this role calls a 'template'
+and builds the following code into your class:
 
     package MyApp::Album;
     use Moose;
@@ -230,7 +236,7 @@ code into your class:
     );
 
     sub _build_photo_args {
-        return []; ## Populated from 'args' parameter
+        return []; 
     };
 
     has photo_fixed_args => (
@@ -276,7 +282,7 @@ generated methods or attributes in the normal L<Moose> way.  See </COOKBOOK>
 for examples.
 
 You can now instantiate your class with the following (assuming your MyApp::Photos
-class allows for a 'source_dir' attribute.)
+class defines a 'source_dir' attribute.)
 
     my $album = MyApp::Album(photo_args=>[source_dir=>'~/photos']);
 
@@ -285,7 +291,7 @@ to when the class is actually used, thus achieving maximum flexibility.  We can
 do with with a minimum of Boilerplate code, thus encouraging rather than punishing
 well separated and clean design.
 
-Please review the test example and case in /t for more assistance.
+Please review the test example and case in '/t' for more assistance.
 
 =head1 DESCRIPTION
 
@@ -310,7 +316,7 @@ framework.  It helps me to defer decisions to the proper authority and also
 makes it easier to test my logic, since pieces are easier to test independently.
 
 Although this leaves me with the design I desire, I find there's a lot of
-repeated Boilerplate code and logic, particularly in my main application class
+repeated boilerplate code and logic, particularly in my main application class
 which often will marshall several underlying classes, each of which is
 performing a particular job.  For example:
 
@@ -327,7 +333,7 @@ performing a particular job.  For example:
     }
 
 NOTE: For clarity I removed some of the extra type constraint checking and type
-coercions I'd normally have here.  Please see the test cases in /t for a working
+coercions I'd normally have here.  Please see the test cases in '/t' for a working
 example.
 
 This retrieves the text for a single webpage.  But what happens when you want
@@ -790,6 +796,33 @@ can just loop:
 
 Which would save you even more boilerplate / repeated code.
 
+=head2 You want additional type constraints on the generated atrributes.
+
+Sometimes you may wish to ensure that the generated attribute conforms to a 
+particular interface.  You can use stand Moose syntax to add or override any
+generated method.
+
+    package MyApp::Album;
+    use Moose;
+
+    with 'MooseX::Role::BuildInstanceOf' => {target => '::Photo'};
+    '+photo' => (does=>'MyApp::Role::Photo');
+
+The above would ensure that whatever instance is created, it conforms to a 
+particular Role.
+
+=head1 DISCUSSION
+
+Generally speaking, I believe this role is best suited for usage in a sort of 
+'middle' complexity level.  That is, when the app has become somewhat complex
+but not yet so much as to warrent seeking out an IOC solution, of which 
+L<Bread::Board> is an ideal candidate.  However this is not to say that IOC
+containers in general and L<Bread::Board> in particular cannot scale downward.
+In fact such a system may be useful even for relatively small projects.  My 
+recommendation is that if you are finding yourself heavily modifying this role
+to get it to work for you, you might find your code clearer if you simple
+took on the additional technical understanding and use L<Bread::Board> instead.
+
 =head1 TODO
 
 Currently the instance slot holding the instance attribute (ie, the 'photo' in
@@ -807,11 +840,14 @@ could do this with a second attribute that is used to defer checking until after
 the class is loaded, but this adds even more generated attributes so I'm not
 convinced its the best way.
 
+Another thing that would be useful is that if the 'target' is a Role, we 'do
+the right thing' in regards to setting a useful type constraint and constructor.
+
 =head1 SEE ALSO
 
 The following modules or resources may be of interest.
 
-L<Moose>, L<Moose::Role>, L<MooseX::Role::Parameterized>
+L<Moose>, L<Moose::Role>, L<MooseX::Role::Parameterized>, L<Bread::Board>
 
 =head1 AUTHOR
 

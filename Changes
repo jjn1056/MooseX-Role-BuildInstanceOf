@@ -1,5 +1,11 @@
 This file documents the revision history for Perl extension MooseX::Role::BuildInstanceOf.
 
+0.05 09 March 2010
+    - Documentation fixes (included fix for missing change delta)
+    - Some work toward cleaning up the test cases.
+0.03 - 0.04 (unknown)
+    - Missing changelog.  Repository indicates bugs fixes in the way the default
+    - namespace feature (::Class and ~Class) work
 0.02  18 January 2010
     - Various formating and syntax updates to more modern Perl standards
     - Removed deprecated practice of using '.' in custom Moose type names
