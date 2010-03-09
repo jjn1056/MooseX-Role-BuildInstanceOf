@@ -1,6 +1,6 @@
 package MooseX::Role::BuildInstanceOf; {
 
-    our $VERSION = '0.05';
+    our $VERSION = '0.06';
     use MooseX::Role::Parameterized;
     use 5.008;
 
