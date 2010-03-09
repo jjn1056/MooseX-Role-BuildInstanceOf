@@ -19,7 +19,7 @@ package MooseX::Role::BuildInstanceOf; {
             my $t = $p0 || $fc ? $p0 : '_';
             $t .= $p3 ? $p1 ? "${p1}_$p2$p3" : "$p2$p3" : "$p1$p2";
             $t;
-        }ge;  warn $s;
+        }ge;
         $s;
     }
 
