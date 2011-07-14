@@ -225,7 +225,6 @@ Here is the "canonical" form of this role's parameters:
         constructor => 'new',
         args => [],
         fixed_args => [],
-        extra_class_handles => {},
     };
 
 Given this, your "MyApp::Album" will now have an attribute called 'photo', which
