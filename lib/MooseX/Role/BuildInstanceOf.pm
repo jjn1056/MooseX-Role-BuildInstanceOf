@@ -8,7 +8,7 @@ package MooseX::Role::BuildInstanceOf; {
         isa  => 'Str',
         is => 'ro',
         required => 1,
-        coerce => 1
+        coerce => 1,
     );
 
     sub decamelize {
@@ -51,6 +51,13 @@ package MooseX::Role::BuildInstanceOf; {
     );
 
     parameter 'fixed_args' => (
+        isa  => 'ArrayRef',
+        is => 'ro',
+        required => 1,
+        default => sub { [] },
+    );
+
+    parameter 'inherited_args' => (
         isa  => 'ArrayRef',
         is => 'ro',
         required => 1,
@@ -125,6 +132,34 @@ package MooseX::Role::BuildInstanceOf; {
             return $parameters->fixed_args;
         };
 
+        has $prefix."_inherited_args" => (
+            is => 'ro',
+            init_arg => undef,
+            isa => 'ArrayRef',
+            lazy_build => 1,
+        );
+
+        method "_build_". $prefix ."_inherited_args" => sub {
+            my $self = shift;
+
+            my @args = @{ $parameters->inherited_args };
+
+            my %resolved_args;
+
+            for my $arg ( @args ) {
+                if ( ! ref $arg ) {
+                    $resolved_args{ $arg } = $self->$arg;
+                }
+                elsif( ref $arg eq 'HASH' ) {
+                    while( my ($k,$v) = each %$arg ) {
+                        $resolved_args{ $k } = ref $v ? $v->($self) : $self->$v;
+                    }
+                }
+            }
+
+            return [ %resolved_args ];
+        };
+
         ## This needs to be broken out into roles or something
         ## not so lame...
 
@@ -163,8 +198,10 @@ package MooseX::Role::BuildInstanceOf; {
         method "merge_".$prefix ."_args" => sub {
             my $self = shift @_;
             my $fixed_args = $prefix."_fixed_args";
+            my $inherited_args = $prefix."_inherited_args";
             my $args = $prefix."_args";
             return (
+                @{ $self->$inherited_args },
                 @{$self->$fixed_args},
                 @{$self->$args},
             );
@@ -615,6 +652,40 @@ instantiation time.  If your subclasses really need to do this, they would
 need to override some of the generated methods.  See the next section for
 more information.
 
+=head2 inherited_args 
+
+Additional args copied from the current class and passed to the target class 
+at instantiation time. Individual args can be passed as strings (which is
+assumed to be the argument name, both the current and target classes),
+or as a hash ref. In the latter case, the hash's keys are the name of the 
+attribute in the target class, and the value can either be a string (name
+of the attribute in the main class) or a coderef (which will be evaluated
+with the master object to determine the argument value).  
+
+    package MyApp::Album;
+    use Moose;
+
+    has root_dir  => ( is => 'ro' );
+    has is_public => ( is => 'ro' );
+
+    with 'MooseX::Role::BuildInstanceOf' => {
+        target => 'MyApp::Image',
+        inherited_args => [ 
+            'root_dir', 
+            { world_visible => 'is_public' },
+            { parent_album => sub { shift @_ } },
+        }
+    };
+
+In this example, the creation of the image target object
+would be quivalent to
+
+    $image = MyApp::Image->new(
+        root_dir      => $album->root_dir,
+        world_visible => $album->is_public,
+        parent_album  => $album,
+    );
+
 =head2 type
 
 By default we create an attribute that holds an instance of the 'target'.
@@ -659,6 +730,11 @@ be overidden by the person instantiating the class.  Your subclassers, however
 can, if they are willing to go to trouble (see section below under GENERATED
 METHODS for more.)
 
+=head3 {$prefix}_inherited_args
+
+Additional args copied from the current class and passed to the target class 
+at instantiation time. 
+
 =head2 {$prefix}
 
 Contains an instance of the target class (the class name found in {$prefix}_class.)
@@ -701,6 +777,10 @@ they want to set different defaults.
 =head3 _build_{$prefix}_fixed_args
 
 as above but for the fixed_args.
+
+=head3 _build_{$prefix}_inherited_args
+
+as above but for the inherited_args.
 
 =head3 _build_{$prefix}
 
