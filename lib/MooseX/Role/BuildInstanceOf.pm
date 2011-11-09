@@ -796,7 +796,7 @@ can just loop:
 
 Which would save you even more boilerplate / repeated code.
 
-=head2 You want additional type constraints on the generated atrributes.
+=head2 You want additional type constraints on the generated attributes.
 
 Sometimes you may wish to ensure that the generated attribute conforms to a 
 particular interface.  You can use stand Moose syntax to add or override any
@@ -815,7 +815,7 @@ particular Role.
 
 Generally speaking, I believe this role is best suited for usage in a sort of 
 'middle' complexity level.  That is, when the app has become somewhat complex
-but not yet so much as to warrent seeking out an IOC solution, of which 
+but not yet so much as to warrant seeking out an IOC solution, of which 
 L<Bread::Board> is an ideal candidate.  However this is not to say that IOC
 containers in general and L<Bread::Board> in particular cannot scale downward.
 In fact such a system may be useful even for relatively small projects.  My 
