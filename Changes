@@ -1,5 +1,12 @@
 This file documents the revision history for Perl extension MooseX::Role::BuildInstanceOf.
 
+0.07 08 November 2011
+    - Documention typo and errors fixed (yanick++)
+    - Fixed broken Makefile.PL
+    - fixed broken test case by removing incorrect use of coercion
+    - allow you to 'inherit' args from the consuming class into the target role
+      (yanick++)
+
 0.06 09 March 2010
     - removed some debug code that got left in place accidentally
 

@@ -1,6 +1,6 @@
 package MooseX::Role::BuildInstanceOf; {
 
-    our $VERSION = '0.06';
+    our $VERSION = '0.07';
     use MooseX::Role::Parameterized;
     use 5.008;
 
@@ -8,7 +8,6 @@ package MooseX::Role::BuildInstanceOf; {
         isa  => 'Str',
         is => 'ro',
         required => 1,
-        coerce => 1,
     );
 
     sub decamelize {
@@ -273,7 +272,7 @@ and builds the following code into your class:
     );
 
     sub _build_photo_args {
-        return []; 
+        return [];
     };
 
     has photo_fixed_args => (
@@ -321,7 +320,7 @@ for examples.
 You can now instantiate your class with the following (assuming your MyApp::Photos
 class defines a 'source_dir' attribute.)
 
-    my $album = MyApp::Album(photo_args=>[source_dir=>'~/photos']);
+    my $album = MyApp::Album->new(photo_args=>[source_dir=>'~/photos']);
 
 The overall goal here being to allow you to defer choice of class and arguments
 to when the class is actually used, thus achieving maximum flexibility.  We can

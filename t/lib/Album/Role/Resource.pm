@@ -7,9 +7,7 @@ package Album::Role::Resource; {
 
     has source_fh => (
         is => 'ro',
-        isa => 'IO::Handle',
         required => 1,
-        coerce => 1,
     );
 
     has title => (
