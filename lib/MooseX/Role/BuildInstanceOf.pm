@@ -4,12 +4,23 @@ package MooseX::Role::BuildInstanceOf; {
     use MooseX::Role::Parameterized;
     use 5.008;
 
+    use Moose::Util::TypeConstraints;
+    my $tc = subtype as 'ClassName';
+    coerce $tc, from 'Str', via { Class::MOP::load_class($_); $_ };
+
+    subtype TargetStr => as 'Str';
+    coerce TargetStr 
+        => from 'Str'
+        => via { $_ };
+
     parameter 'target' => (
-        isa  => 'Str',
+        isa  => 'TargetStr',
         is => 'ro',
         required => 1,
         coerce => 1
     );
+
+    no Moose::Util::TypeConstraints;
 
     sub decamelize {
         my $s = shift;
@@ -64,10 +75,6 @@ package MooseX::Role::BuildInstanceOf; {
         default => sub { 'attribute' },
     );
 
-    use Moose::Util::TypeConstraints;
-    my $tc = subtype as 'ClassName';
-    coerce $tc, from 'Str', via { Class::MOP::load_class($_); $_ };
-    no Moose::Util::TypeConstraints;
 
     role {
         my $parameters = shift @_;

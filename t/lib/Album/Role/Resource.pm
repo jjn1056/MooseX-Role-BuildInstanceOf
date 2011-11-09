@@ -9,7 +9,6 @@ package Album::Role::Resource; {
         is => 'ro',
         isa => 'IO::Handle',
         required => 1,
-        coerce => 1,
     );
 
     has title => (
