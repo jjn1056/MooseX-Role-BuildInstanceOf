@@ -2,7 +2,15 @@ package MooseX::Role::BuildInstanceOf; {
 
     our $VERSION = '0.08';
     use MooseX::Role::Parameterized;
+    use Moose::Util::TypeConstraints;
     use 5.008;
+
+    my $ClassName = subtype as 'ClassName';
+    coerce $ClassName, from 'Str', via { Class::MOP::load_class($_); $_ };
+
+    my $CodeRef = subtype as 'CodeRef';
+    coerce $CodeRef, from 'ArrayRef', via { my $args = $_; sub { $args } };
+    no Moose::Util::TypeConstraints;
 
     parameter 'target' => (
         isa  => 'Str',
@@ -43,16 +51,18 @@ package MooseX::Role::BuildInstanceOf; {
     );
 
     parameter 'args' => (
-        isa  => 'ArrayRef',
+        isa  => $CodeRef,
         is => 'ro',
         required => 1,
+        coerce => 1,
         default => sub { [] },
     );
 
     parameter 'fixed_args' => (
-        isa  => 'ArrayRef',
+        isa  => $CodeRef,
         is => 'ro',
         required => 1,
+        coerce => 1,
         default => sub { [] },
     );
 
@@ -70,18 +80,13 @@ package MooseX::Role::BuildInstanceOf; {
         default => sub { 'attribute' },
     );
 
-    use Moose::Util::TypeConstraints;
-    my $tc = subtype as 'ClassName';
-    coerce $tc, from 'Str', via { Class::MOP::load_class($_); $_ };
-    no Moose::Util::TypeConstraints;
-
     role {
         my $parameters = shift @_;
         my $prefix = $parameters->prefix;
 
         has $prefix."_class" => (
             is => 'ro',
-            isa => $tc,
+            isa => $ClassName,
             lazy_build => 1,
             coerce => 1,
             handles => {
@@ -117,7 +122,7 @@ package MooseX::Role::BuildInstanceOf; {
         );
 
         method "_build_". $prefix ."_args" => sub {
-            return $parameters->args;
+            return $parameters->args->();
         };
 
         has $prefix."_fixed_args" => (
@@ -128,7 +133,7 @@ package MooseX::Role::BuildInstanceOf; {
         );
 
         method "_build_". $prefix ."_fixed_args" => sub {
-            return $parameters->fixed_args;
+            return $parameters->fixed_args->();
         };
 
         has $prefix."_inherited_args" => (
