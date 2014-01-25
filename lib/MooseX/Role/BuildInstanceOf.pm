@@ -2,11 +2,12 @@ package MooseX::Role::BuildInstanceOf;
 # ABSTRACT: Less Boilerplate when you need lots of Instances
 {
     use MooseX::Role::Parameterized 0.13;
+    use Class::Load;
     use 5.008001;
 
     use Moose::Util::TypeConstraints;
     my $ClassName = subtype as 'ClassName';
-    coerce $ClassName, from 'Str', via { Class::MOP::load_class($_); $_ };
+    coerce $ClassName, from 'Str', via { Class::Load::load_class($_); $_ };
 
     my $CodeRef = subtype as 'CodeRef';
     coerce $CodeRef, from 'ArrayRef', via { my $args = $_; sub { $args } };

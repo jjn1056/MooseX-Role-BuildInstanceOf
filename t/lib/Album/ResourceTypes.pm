@@ -1,7 +1,7 @@
 package Album::ResourceTypes; {
 
     use Moose;
-    use Class::MOP;
+    use Class::Load;
     use List::MoreUtils qw(uniq);
     use Moose::Util::TypeConstraints;
 
@@ -15,7 +15,7 @@ package Album::ResourceTypes; {
     coerce 'Album.ResourceTypes.ArrayRefOfClassName',
     from 'ArrayRef[Str]',
     via {
-        Class::MOP::load_class($_) for @$_; $_
+        Class::Load::load_class($_) for @$_; $_
     };
 
     has resources => (
