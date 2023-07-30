@@ -3,8 +3,7 @@ use strict;
 use warnings;
 use lib qw(t/lib);
 
-use_ok 'Album',
-  'No trouble loading the Album class';
+use_ok 'Album';
 
 ok my $album = Album->new(
     storage_args=>[source=>'./t/share'],
