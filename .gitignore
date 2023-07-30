@@ -2,6 +2,9 @@ log/*
 blib/*
 inc/*
 local-lib5/*
+/.build/
+/MooseX-Role-BuildInstanceOf-*/
+/MooseX-Role-BuildInstanceOf-*.tar.gz
 Makefile
 Makefile.old
 META.yml
