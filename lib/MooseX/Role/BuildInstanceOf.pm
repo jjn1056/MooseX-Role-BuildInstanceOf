@@ -860,9 +860,9 @@ Then you can use the 'traits' argument, it will get passed corrected:
 
     my $app = MyApp->new(
         storage_class=>'MyApp::Storage::WebStorage',
-        storage_args=>[host_website=>'http://mystorage.com/']
+        storage_args=>[host_website=>'http://mystorage.com/'],
         text_class=>'MyApp::WikiText,
-        text_args=>[traits=>[qw/BasicTheme WikiLinks AllowImages/]]
+        text_args=>[traits=>[qw/BasicTheme WikiLinks AllowImages/]],
     );
 
 =head2 You have a bunch of target classes
