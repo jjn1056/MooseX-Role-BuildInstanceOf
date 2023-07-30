@@ -5,8 +5,10 @@ package MooseX::Role::BuildInstanceOf;
     use 5.008001;
 
     use Moose::Util::TypeConstraints;
+    use Class::Load qw(load_class);
+
     my $ClassName = subtype as 'ClassName';
-    coerce $ClassName, from 'Str', via { Class::MOP::load_class($_); $_ };
+    coerce $ClassName, from 'Str', via { load_class($_); $_ };
 
     my $CodeRef = subtype as 'CodeRef';
     coerce $CodeRef, from 'ArrayRef', via { my $args = $_; sub { $args } };
