@@ -5,8 +5,10 @@ package MooseX::Role::BuildInstanceOf;
     use 5.008001;
 
     use Moose::Util::TypeConstraints;
+    use Class::Load qw(load_class);
+
     my $ClassName = subtype as 'ClassName';
-    coerce $ClassName, from 'Str', via { Class::MOP::load_class($_); $_ };
+    coerce $ClassName, from 'Str', via { load_class($_); $_ };
 
     my $CodeRef = subtype as 'CodeRef';
     coerce $CodeRef, from 'ArrayRef', via { my $args = $_; sub { $args } };
@@ -655,15 +657,15 @@ instantiation time.  If your subclasses really need to do this, they would
 need to override some of the generated methods.  See the next section for
 more information.
 
-=head2 inherited_args 
+=head2 inherited_args
 
-Additional args copied from the current class and passed to the target class 
+Additional args copied from the current class and passed to the target class
 at instantiation time. Individual args can be passed as strings (which is
 assumed to be the argument name, both the current and target classes),
-or as a hash ref. In the latter case, the hash's keys are the name of the 
+or as a hash ref. In the latter case, the hash's keys are the name of the
 attribute in the target class, and the value can either be a string (name
 of the attribute in the main class) or a coderef (which will be evaluated
-with the master object to determine the argument value).  
+with the master object to determine the argument value).
 
     package MyApp::Album;
     use Moose;
@@ -673,8 +675,8 @@ with the master object to determine the argument value).
 
     with 'MooseX::Role::BuildInstanceOf' => {
         target => 'MyApp::Image',
-        inherited_args => [ 
-            'root_dir', 
+        inherited_args => [
+            'root_dir',
             { world_visible => 'is_public' },
             { parent_album => sub { shift @_ } },
         }
@@ -735,8 +737,8 @@ METHODS for more.)
 
 =head3 {$prefix}_inherited_args
 
-Additional args copied from the current class and passed to the target class 
-at instantiation time. 
+Additional args copied from the current class and passed to the target class
+at instantiation time.
 
 =head2 {$prefix}
 
@@ -860,9 +862,9 @@ Then you can use the 'traits' argument, it will get passed corrected:
 
     my $app = MyApp->new(
         storage_class=>'MyApp::Storage::WebStorage',
-        storage_args=>[host_website=>'http://mystorage.com/']
+        storage_args=>[host_website=>'http://mystorage.com/'],
         text_class=>'MyApp::WikiText,
-        text_args=>[traits=>[qw/BasicTheme WikiLinks AllowImages/]]
+        text_args=>[traits=>[qw/BasicTheme WikiLinks AllowImages/]],
     );
 
 =head2 You have a bunch of target classes
@@ -881,7 +883,7 @@ Which would save you even more boilerplate / repeated code.
 
 =head2 You want additional type constraints on the generated attributes.
 
-Sometimes you may wish to ensure that the generated attribute conforms to a 
+Sometimes you may wish to ensure that the generated attribute conforms to a
 particular interface.  You can use stand Moose syntax to add or override any
 generated method.
 
@@ -891,17 +893,17 @@ generated method.
     with 'MooseX::Role::BuildInstanceOf' => {target => '::Photo'};
     '+photo' => (does=>'MyApp::Role::Photo');
 
-The above would ensure that whatever instance is created, it conforms to a 
+The above would ensure that whatever instance is created, it conforms to a
 particular Role.
 
 =head1 DISCUSSION
 
-Generally speaking, I believe this role is best suited for usage in a sort of 
+Generally speaking, I believe this role is best suited for usage in a sort of
 'middle' complexity level.  That is, when the app has become somewhat complex
-but not yet so much as to warrant seeking out an IOC solution, of which 
+but not yet so much as to warrant seeking out an IOC solution, of which
 L<Bread::Board> is an ideal candidate.  However this is not to say that IOC
 containers in general and L<Bread::Board> in particular cannot scale downward.
-In fact such a system may be useful even for relatively small projects.  My 
+In fact such a system may be useful even for relatively small projects.  My
 recommendation is that if you are finding yourself heavily modifying this role
 to get it to work for you, you might find your code clearer if you simple
 took on the additional technical understanding and use L<Bread::Board> instead.
